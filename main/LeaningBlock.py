@@ -3,8 +3,8 @@
 import pybullet as p
 import pybullet_data
 import numpy as np
-from LabBullet.utils import macro_const
-from LabBullet.utils import stability_func
+from PhysicalEngine.utils import macro_const
+from PhysicalEngine.utils import stability_func
 import time
 
 const = macro_const.Const()

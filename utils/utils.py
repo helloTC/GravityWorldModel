@@ -1,7 +1,7 @@
 import numpy as np
 import pybullet as p
 import pybullet_data
-from LabBullet.utils import macro_const
+from PhysicalEngine.utils import macro_const
 
 ConstCollect = macro_const.Const()
 

@@ -1,7 +1,7 @@
 # Tile blocks and ask participant to evaluate stability of the configuration
 import pybullet as p
-from LabBullet.utils import stability_func
-from LabBullet.utils import macro_const
+from PhysicalEngine.utils import stability_func
+from PhysicalEngine.utils import macro_const
 import time
 import pickle
 import numpy as np

@@ -1,6 +1,6 @@
 import pybullet as p
 import pybullet_data
-from LabBullet.utils import macro_const
+from PhysicalEngine.utils import macro_const
 import numpy as np
 import time
 
@@ -270,7 +270,18 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
     confidence[bool list]: stability confidence
     """
     confidence = []
+    # Record initial configuration
+    box_pos_ini, box_ori_ini = [], []
+    for boxID in boxIDs:
+        box_pos_tmp, box_ori_tmp = p.getBasePositionAndOrientation(boxID)
+        box_pos_ini.append(box_pos_tmp)
+        box_ori_ini.append(box_ori_tmp)
+    # Start Simulation
     for n in range(n_iter):
+        # Initialize configuration
+        for i, boxID in enumerate(boxIDs):
+            for i, boxID in enumerate(boxIDs):
+                p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])
         # First, adjust position of the configuration.
         box_pos_adj, box_ori_adj = adjust_confg_position(boxIDs, pos_sigma)
         for i, boxID in enumerate(boxIDs):

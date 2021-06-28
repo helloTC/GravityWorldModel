@@ -1,8 +1,8 @@
 # Scripts to do test of some functions
 
 import pybullet as p
-from LabBullet.utils import macro_const
-from LabBullet.utils import stability_func
+from PhysicalEngine.utils import macro_const
+from PhysicalEngine.utils import stability_func
 import time
 import numpy as np
 import pickle
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     # stability_func.examine_stability(box_pos_adj, box_pos_fin)
 
     # run IPE
-    confidence = stability_func.run_IPE(boxIDs, 0.05, 0.4)
+    confidence = stability_func.run_IPE(boxIDs, 0.05, 0.05)
 
 
 
