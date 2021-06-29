@@ -34,5 +34,16 @@ def disable_rendering():
 # Rotation Transformation
 
 # Camera
-
-# 
+def set_camera(distance, yaw, pitch, height):
+    """
+    Set camera position.
+    Note that for simplicity, target position of the camera was fixed and followed the center of objects.
+    ------------------
+    distance[float]: camera distance.
+    yaw[float]: camera yaw angle (in degrees, left/right).
+    pitch[float]: camera pitch angle (in degrees, up/down).
+    height[float]: camera height. 
+    """
+    x = distance*np.cos(roll*const.PI/180)
+    y = distance*np.sin(roll*const.PI/180)
+    p.resetDebugVisualizerCamera(distance, yaw+90, pitch, [x,y,height]) 
