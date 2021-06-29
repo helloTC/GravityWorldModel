@@ -100,7 +100,8 @@ def create_box(position, size, color=None, texture=None, mass=1, client=0, isCol
                                    physicsClientId=client)    
     if isCollision:    
         boxCollisionShape = p.createCollisionShape(shapeType=p.GEOM_BOX,    
-                                                   halfExtents=np.array(size)/2,                                                   physicsClientId=client)
+                                                   halfExtents=np.array(size)/2,
+                                                   physicsClientId=client)
     else:
         boxCollisionShape = const.NULL_OBJ
 
@@ -119,19 +120,20 @@ def create_box(position, size, color=None, texture=None, mass=1, client=0, isCol
         p.changeVisualShape(boxID, -1, textureUniqueId=textureID, physicsClientId=client)
     return boxID
 
-def check_box_in_ground(boxID, tol=0.001):
+def check_box_in_ground(boxID, ground_height=0.0, tol=0.001):
     """
     Check if box located in ground
     -------------------------
-    boxID: box ID 
-    tol: tolence that boxs located in ground.
+    boxID[int]: box ID 
+    ground_height[float]: baseline of the ground, if height of ground is not 0, provide it here. 
+    tol[float]: tolence that boxs located on ground.
 
     Return:
     -------
-    Bool: in/not in ground
+    Bool: in/not on ground
     """
     minPos, maxPos = p.getAABB(boxID)
-    if np.abs(minPos[-1]) < tol:
+    if np.abs(minPos[-1]) < tol + ground_height:
         return True
     else:
         return False
@@ -199,7 +201,7 @@ def adjust_confg_position(boxIDs, sigma):
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
     return box_pos_all, box_ori_all  
 
-def prepare_force_noise(boxIDs, f_mag, f_angle):
+def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
     """
     Prepare force noise.
     Force noise was only added into the box which located in ground.
@@ -207,6 +209,7 @@ def prepare_force_noise(boxIDs, f_mag, f_angle):
     boxIDs[list]: All boxes in the configuration.
     f_mag[float]: Force Magnitude.
     f_angle[float]: Force Angle, need to transfer into radian measure.
+    ground_height[float]: ground height.
 
     Return:
     -------
@@ -217,7 +220,7 @@ def prepare_force_noise(boxIDs, f_mag, f_angle):
     # Find Box located in ground ----------
     isground = []
     for boxID in boxIDs:
-        isground.append(check_box_in_ground(boxID))
+        isground.append(check_box_in_ground(boxID, ground_height=ground_height))
     targbox = np.random.choice(np.where(isground)[0])
     # Force was interacted into this box.
     targboxID = boxIDs[targbox]
@@ -254,7 +257,7 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.05):
             isstable.append(False)
     return isstable
 
-def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
+def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.0, n_iter=1000):
     """
     Run model of intuitive physical engine. Add position noise and force noise to the configuration and evaluate confidence under each parameter pair.
     Note that for position noise, we adjust position of each box, for force noise, we add force to the box that located in the ground (randomly add forces into one box). Direction of force was uniformly sampled under range around [0, 2*PI]
@@ -263,6 +266,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
     pos_sigma[float]: Position noise was added as a horizontal gaussian noise. The gaussian noise follows N~(0, sigma).
     force_magnitude[float]: force magnitude.
     force_time[float]: add force within the first n seconds.
+    ground_height[float]: ground height.
     n_iter[int]: IPE iterations.
 
     Return:
@@ -286,7 +290,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
         # Second, prepare force noise
           # force angle generated uniformly
         force_angle = np.random.uniform(0, 2*const.PI)
-        targboxID, force_arr, position_arr = prepare_force_noise(boxIDs, force_magnitude, force_angle)
+        targboxID, force_arr, position_arr = prepare_force_noise(boxIDs, force_magnitude, force_angle, ground_height=ground_height)
         # Get original position of each box
         # For we examine position difference along z axis, here we do not record orientation of each box.
         box_pos_ori = []
