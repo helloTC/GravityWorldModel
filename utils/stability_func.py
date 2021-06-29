@@ -269,6 +269,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
     --------
     confidence[bool list]: stability confidence
     """
+    print('IPE Simulation with parameters {}:{}'.format(pos_sigma, force_magnitude))
     confidence = []
     # Record initial configuration
     box_pos_ini, box_ori_ini = [], []
@@ -295,7 +296,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
         # Simulation
           # Set gravity
         p.setGravity(0,0,const.GRAVITY)
-        for i in range(300):
+        for i in range(100):
             p.stepSimulation()
             time.sleep(const.TIME_STEP)
             if i<force_time/(const.TIME_STEP): # Add force within the first 200ms
@@ -310,9 +311,9 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, n_iter=1000):
           # Examine stability
         isstable = examine_stability(box_pos_ori, box_pos_fin)
         if (True in isstable):
-            print('{}:Unstable'.format(n+1))
+            print('  {}:Unstable'.format(n+1))
         else:
-            print('{}:Stable'.format(n+1))
+            print('  {}:Stable'.format(n+1))
         confidence.append(True in isstable)
         # Finally, initialize configuration
         for i, boxID in enumerate(boxIDs):
