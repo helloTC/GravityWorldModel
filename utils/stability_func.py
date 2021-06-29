@@ -6,13 +6,14 @@ import time
 
 const = macro_const.Const()
 
-def create_floor(urdf=None, color=None, texture=None, client=0):
+def create_floor(urdf=None, color=None, texture=None, friction=0.1, client=0):
     """
     Create floor
     -------------
     urdf[.urdf]: plane urdf
     color[list]: RGBA, plane color.
     texture[.jpg/.png]: texture image
+    friction[float]: lateral friction of the floor
 
     Return:
     --------
@@ -27,12 +28,14 @@ def create_floor(urdf=None, color=None, texture=None, client=0):
         # Load texture
         p.changeVisualShape(planeID, -1, rgbaColor=color, physicsClientId=client)
 
-    if texture is not None:                                                     
+    if texture is not None:                                              
         textureID = p.loadTexture(texture)    
         p.changeVisualShape(planeID, -1, textureUniqueId=textureID, physicsClientId=client)
+    # Change lateral friction
+    p.changeDynamics(planeID, -1, lateralFriction=friction)
     return planeID
 
-def create_cylinder(position, radius, height, color=None, texture=None, mass=1, client=0, isCollision=True):
+def create_cylinder(position, radius, height, color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
     """
     create cylinder in physical scene.
     ----------------------
@@ -42,6 +45,7 @@ def create_cylinder(position, radius, height, color=None, texture=None, mass=1, 
     color[4-element tuple]: rgba color
     texture[.jpg/.png]: texture image
     mass[float]: mass of the cylinder
+    friction[float]: lateral friction
     isCollision[Bool]: is collision or not.
 
     Return:
@@ -76,9 +80,11 @@ def create_cylinder(position, radius, height, color=None, texture=None, mass=1, 
     # change texture
         textureID = p.loadTexture(texture)    
         p.changeVisualShape(cylinderID, -1, textureUniqueId=textureID, physicsClientId=client)
+    # Set lateral friction
+    p.changeDynamics(cylinderID, -1, lateralFriction=friction)
     return cylinderID
 
-def create_box(position, size, color=None, texture=None, mass=1, client=0, isCollision=True):
+def create_box(position, size, color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
     """ 
     create one box in physical scene
     --------------------------
@@ -87,6 +93,7 @@ def create_box(position, size, color=None, texture=None, mass=1, client=0, isCol
     color[list]: RGBA color
     texture[.jpg/.png]: texture image
     mass[float]: mass of the box
+    friction[float]: lateral friction
     client: physics client
     isCollision[Bool]: Consider collision or not.
 
@@ -118,6 +125,8 @@ def create_box(position, size, color=None, texture=None, mass=1, client=0, isCol
     # change texture
         textureID = p.loadTexture(texture)    
         p.changeVisualShape(boxID, -1, textureUniqueId=textureID, physicsClientId=client)
+    # Set lateral friction
+    p.changeDynamics(boxID, -1, lateralFriction=friction)
     return boxID
 
 def check_box_in_ground(boxID, ground_height=0.0, tol=0.001):
@@ -260,7 +269,7 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.05):
 def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.0, n_iter=1000):
     """
     Run model of intuitive physical engine. Add position noise and force noise to the configuration and evaluate confidence under each parameter pair.
-    Note that for position noise, we adjust position of each box, for force noise, we add force to the box that located in the ground (randomly add forces into one box). Direction of force was uniformly sampled under range around [0, 2*PI]
+    Note that for position noise, we adjust position of each box, for force noise, we add force to the box that located in the ground (randomly add forces to one of the boxes). Direction of force was uniformly sampled under range around [0, 2*PI]
     -------------------
     boxIDs[list]: box IDs.
     pos_sigma[float]: Position noise was added as a horizontal gaussian noise. The gaussian noise follows N~(0, sigma).
@@ -321,8 +330,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
         confidence.append(True in isstable)
         # Finally, initialize configuration
         for i, boxID in enumerate(boxIDs):
-            for i, boxID in enumerate(boxIDs):
-                p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])
+            p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])
     return confidence
           
 
