@@ -160,19 +160,18 @@ def object_overlap_correct(boxIDs, velocity_tol=0.005):
     box_pos_all[three-dimensional list]: corrected configuration, position.
     box_ori_all[three-dimensional list]: corrected configuration, orientation. 
     """
-    for boxID in boxIDs:
-        # print('Box {}'.format(boxID))
-        while 1:
-            p_min, p_max = p.getAABB(boxID)
-            p.stepSimulation()
-            lin_vec, ang_vec = p.getBaseVelocity(boxID)
-            velocity = np.sum((lin_vec-np.zeros(3))**2+(ang_vec-np.zeros(3))**2)
+    while 1:
+        p.setGravity(0,0,0)
+        velocity = 0
+        p.stepSimulation()
+        for boxID in boxIDs:
+            lin_vec_tmp, ang_vec_tmp = p.getBaseVelocity(boxID)
+            velocity_tmp = np.sum(np.array(lin_vec_tmp)**2+np.array(ang_vec_tmp)**2)
+            velocity += velocity_tmp
             # print('  Velocity: {}'.format(velocity))
-            if velocity < velocity_tol:
-                p.resetBaseVelocity(boxID, [0,0,0], [0,0,0])
-                break
-            else:
-                p.resetBaseVelocity(boxID, [0,0,0], [0,0,0])
+            p.resetBaseVelocity(boxID, [0,0,0], [0,0,0])
+        if velocity < velocity_tol:
+            break
     # Get position of each box
     box_pos_all = []
     box_ori_all = []
@@ -241,7 +240,7 @@ def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
     posObj = box_pos
     return targboxID, forceObj, posObj 
 
-def examine_stability(box_pos_ori, box_pos_fin, tol=0.05):
+def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
     """
     Examine the stability of the configuration.
     Stability was evaluated by checking position difference of the original configuration and the final configuration.
@@ -309,7 +308,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
         # Simulation
           # Set gravity
         p.setGravity(0,0,const.GRAVITY)
-        for i in range(100):
+        for i in range(200):
             p.stepSimulation()
             time.sleep(const.TIME_STEP)
             if i<force_time/(const.TIME_STEP): # Add force within the first 200ms
