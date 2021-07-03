@@ -199,7 +199,7 @@ def adjust_confg_position(boxIDs, sigma):
         box_pos, box_ori = p.getBasePositionAndOrientation(boxID)
         # Prepare Gaussian Noise
         pos_nos = np.random.normal(0, sigma, 3)
-        # No noise in Z axis
+        # No noise along Z axis
         pos_nos[-1] = 0
         # print('Noise is {}'.format(pos_nos))
         # Add noise
@@ -225,19 +225,29 @@ def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
     forceObj[Three-dimension list]: Force vector to be applied.
     positionObj[Three-dimension list]: Position vector to be applied.
     """
-    # Find Box located in ground ----------
+    # Find Box located in the ground ----------
     isground = []
     for boxID in boxIDs:
         isground.append(check_box_in_ground(boxID, ground_height=ground_height))
-    targbox = np.random.choice(np.where(isground)[0])
-    # Force was interacted into this box.
-    targboxID = boxIDs[targbox]
-    # Get Position of this targbox
-    box_pos, box_ori = p.getBasePositionAndOrientation(targboxID)
-    # Prepare force -----------------------
-    # Force orientation: uniform over the range [0, 360]
-    forceObj = [f_mag*np.cos(f_angle), f_mag*np.sin(f_angle), 0]
-    posObj = box_pos
+    if sum(isground)>0:
+        targbox = np.random.choice(np.where(isground)[0])
+    else:
+        # Exception happened.
+        print('No box was found located in the ground.')
+        targbox = None
+    if targbox is not None:
+        # Force was interacted into this box.
+        targboxID = boxIDs[targbox]
+        # Get Position of this targbox
+        box_pos, box_ori = p.getBasePositionAndOrientation(targboxID)
+        # Prepare force -----------------------
+        # Force orientation: uniform over the range [0, 360]
+        forceObj = [f_mag*np.cos(f_angle), f_mag*np.sin(f_angle), 0]
+        posObj = box_pos
+    else:
+        targboxID = None
+        forceObj = None
+        posObj = None
     return targboxID, forceObj, posObj 
 
 def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
@@ -265,7 +275,7 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
             isstable.append(False)
     return isstable
 
-def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.0, n_iter=1000):
+def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.0, n_iter=1000, shownotion=True):
     """
     Run model of intuitive physical engine. Add position noise and force noise to the configuration and evaluate confidence under each parameter pair.
     Note that for position noise, we adjust position of each box, for force noise, we add force to the box that located in the ground (randomly add forces to one of the boxes). Direction of force was uniformly sampled under range around [0, 2*PI]
@@ -276,6 +286,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
     force_time[float]: add force within the first n seconds.
     ground_height[float]: ground height.
     n_iter[int]: IPE iterations.
+    shownotion[bool]: Whether show notation of stability. By default is True.
 
     Return:
     --------
@@ -299,34 +310,39 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
           # force angle generated uniformly
         force_angle = np.random.uniform(0, 2*const.PI)
         targboxID, force_arr, position_arr = prepare_force_noise(boxIDs, force_magnitude, force_angle, ground_height=ground_height)
-        # Get original position of each box
-        # For we examine position difference along z axis, here we do not record orientation of each box.
-        box_pos_ori = []
-        for boxID in boxIDs:
-            box_pos_tmp, _ = p.getBasePositionAndOrientation(boxID)
-            box_pos_ori.append(box_pos_tmp)
-        # Simulation
-          # Set gravity
-        p.setGravity(0,0,const.GRAVITY)
-        for i in range(200):
-            p.stepSimulation()
-            time.sleep(const.TIME_STEP)
-            if i<force_time/(const.TIME_STEP): # Add force within the first 200ms
-                # Add force to the target box
-                p.applyExternalForce(targboxID, -1, force_arr, position_arr, p.WORLD_FRAME)
-        # Evaluate stability
-          # Get base position of the configuration
-        box_pos_fin = []
-        for boxID in boxIDs:
-            box_pos_tmp, _ = p.getBasePositionAndOrientation(boxID)
-            box_pos_fin.append(box_pos_tmp)
-          # Examine stability
-        isstable = examine_stability(box_pos_ori, box_pos_fin)
-        if (True in isstable):
-            print('  {}:Unstable'.format(n+1))
-        else:
-            print('  {}:Stable'.format(n+1))
-        confidence.append(True in isstable)
+        if targboxID is not None:
+            # targboxID is None indicated no box located in the ground.
+            # No need to do simulation for we have no idea on the force during simulation.
+            # Here, simulation could be done
+            # Get original position of each box
+            # For we examine position difference along z axis, here we do not record orientation of each box.
+            box_pos_ori = []
+            for boxID in boxIDs:
+                box_pos_tmp, _ = p.getBasePositionAndOrientation(boxID)
+                box_pos_ori.append(box_pos_tmp)
+            # Simulation
+              # Set gravity
+            p.setGravity(0,0,const.GRAVITY)
+            for i in range(200):
+                p.stepSimulation()
+                time.sleep(const.TIME_STEP)
+                if i<force_time/(const.TIME_STEP): # Add force within the first 200ms
+                    # Add force to the target box
+                    p.applyExternalForce(targboxID, -1, force_arr, position_arr, p.WORLD_FRAME)
+            # Evaluate stability
+              # Get base position of the configuration
+            box_pos_fin = []
+            for boxID in boxIDs:
+                box_pos_tmp, _ = p.getBasePositionAndOrientation(boxID)
+                box_pos_fin.append(box_pos_tmp)
+              # Examine stability
+            isstable = examine_stability(box_pos_ori, box_pos_fin)
+            if shownotion:
+                if (True in isstable):
+                    print('  {}:Unstable'.format(n+1))
+                else:
+                    print('  {}:Stable'.format(n+1))
+            confidence.append(True in isstable)
         # Finally, initialize configuration
         for i, boxID in enumerate(boxIDs):
             p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])

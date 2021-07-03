@@ -64,14 +64,14 @@ def main(parpath, config_path, output_path=None, isgui=False):
         p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
    
     # run IPE
-    pos_sigma = [0, 0.04, 0.08, 0.12, 0.16, 0.20]
-    force_sigma = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0]
+    pos_sigma = [0, 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21]
+    force_sigma = [0.0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.5, 3.0]
     conf_all = []
     for pos_tmp in pos_sigma:
         conf_pos = []
         for force_tmp in force_sigma:
-            conf_tmp = stability_func.run_IPE(boxIDs, pos_tmp, force_tmp, n_iter=100)
-            conf_pos.append(sum(conf_tmp)/100.0)
+            conf_tmp = stability_func.run_IPE(boxIDs, pos_tmp, force_tmp, n_iter=100, shownotion=False)
+            conf_pos.append(sum(conf_tmp)/len(conf_tmp))
         conf_all.append(conf_pos)
     conf_all = np.array(conf_all)
     conf_all = 1.0-conf_all
@@ -84,17 +84,13 @@ def main(parpath, config_path, output_path=None, isgui=False):
 if __name__ == '__main__':
     # Try Multiprocess
     parpath = '/home/hellotc/PhysicsEngine/PNAS2013_exp1_stimuli_use'
-    outpath = '/home/hellotc/workingdir/IntuitivePhysics/IPE_origin'
+    outpath = '/home/hellotc/workdir/IntuitivePhysics/IPE_origin'
 
     process_list = []
     config_name_all = os.listdir(parpath)
     config_name_all.sort()
-    for config_name in config_name_all:
+    for i, config_name in enumerate(config_name_all):     
         a = Process(target=main, args=(parpath, config_name, outpath, False))
         a.start()
-        process_list.append(a)
-    
-    for i in process_list:
-        a.join()
-
-
+        print('Process {}'.format(i+1))
+        process_list.append(a) 
