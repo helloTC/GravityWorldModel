@@ -348,6 +348,56 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
             p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])
     return confidence
           
+def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range_y = (-1, 1)):
+    """
+    Place boxes on space one by one.
+    This algorithm was set as follows:
+    We iteratively generate box with its horizontal position located within the pos_range. If it did not overlap with previous generated boxes, then it located in the ground. If it overlapped with some of previous boxes, we placed it to the highest position among all previous boxes. 
+    Larger pos_range ensures lower height of this configuration, otherwise also works.
+    --------------------------
+    box_num[int]: the number of boxes.
+    box_size_all[list/tuple]: box size list/tuple. Each element in the list was a three-dimensional list. The actual size of the box was randomly selected from this list.
+    pos_range_x[two-element tuple]: the maximum horizontal position in x axis that the box could be placed. Tuple indicated (min_x, max_x) in the space.
+    pos_range_y[two-element tuple]: the maximum horizontal position in y axis that the box could be placed. Tuple indicated (min_y, max_y) in the space.
+
+    Returns:
+    box_pos_all[list]: all box positions
+    boxsize_idx_all[list]: box size index that selected from box_size_all
+    """
+    box_pos_all = []
+    boxsize_idx_all = []
+    for n in range(box_num):
+        present_box_num = len(box_pos_all)
+        # Decide size of the box
+        box_size_idx = np.random.choice(len(box_size_all))
+        box_size_now = box_size_all[box_size_idx]
+        assert len(box_size_now) == 3, "Size of the box is a three-dimensional list."
+        # Randomly generate a position for the box
+        x_pos = np.random.uniform(pos_range_x[0], pos_range_x[1])
+        y_pos = np.random.uniform(pos_range_y[0], pos_range_y[1])
+        # Check if this box was overlapped with previous boxes
+        if present_box_num == 0:
+            # If no previous box, place the new one in the ground.
+            box_pos_all.append([x_pos, y_pos, box_size_now[-1]/2])
+        else:
+            # If there are boxes, examine if the new one overlapped with previous configuration.
+            z_pos = 0 + box_size_now[-1]/2
+            for i, box_pos_prev in enumerate(box_pos_all):
+                # Get box size
+                box_size_prev = box_size_all[boxsize_idx_all[i]]
+                pos_x_diff = np.abs(x_pos-box_pos_prev[0])
+                pos_y_diff = np.abs(y_pos-box_pos_prev[1])
+                if (pos_x_diff<(box_size_now[0]+box_size_prev[0])/2) & (pos_y_diff<(box_size_now[1]+box_size_prev[1])/2):
+                    # Overlap, check if we need to update z axis of the new box.
+                    z_obj_prev = box_pos_prev[-1] + box_size_prev[-1]/2 + box_size_now[-1]/2
+                    if z_obj_prev > z_pos:
+                        z_pos = 1.0*z_obj_prev
+                else:
+                    # No overlap just pass this iteration.
+                    pass
+            box_pos_all.append([x_pos, y_pos, z_pos])
+        boxsize_idx_all.append(box_size_idx)
+    return box_pos_all, boxsize_idx_all
 
 
 
