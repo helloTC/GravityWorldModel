@@ -347,8 +347,8 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
         for i, boxID in enumerate(boxIDs):
             p.resetBasePositionAndOrientation(boxID, box_pos_ini[i], box_ori_ini[i])
     return confidence
-          
-def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range_y = (-1, 1)):
+
+def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range_y = (-1, 1), overlap_thr_x=0.50, overlap_thr_y=0.50):
     """
     Place boxes on space one by one.
     This algorithm was set as follows:
@@ -359,10 +359,12 @@ def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range
     box_size_all[list/tuple]: box size list/tuple. Each element in the list was a three-dimensional list. The actual size of the box was randomly selected from this list.
     pos_range_x[two-element tuple]: the maximum horizontal position in x axis that the box could be placed. Tuple indicated (min_x, max_x) in the space.
     pos_range_y[two-element tuple]: the maximum horizontal position in y axis that the box could be placed. Tuple indicated (min_y, max_y) in the space.
+    overlap_thr_x[float]: A parameter to control stability of the stimuli. It indicated the minimal overlap between two touched boxes when the stimuli was generated. The value means proportion of the length in x axis of the present box.
+    overlap_thr_y[float]: A parameter to control stability of the stimuli. It indicated the minimal overlap between two touched boxes when the stimuli was generated. The value means proportion of the length in y axis of the present box.
 
     Returns:
-    box_pos_all[list]: all box positions
-    boxsize_idx_all[list]: box size index that selected from box_size_all
+    box_pos[list]: all box positions in the configuration.
+    boxsize_idx_all[list]: indices which corresponding to box_size_all in order to save the potential size of each box.
     """
     box_pos_all = []
     boxsize_idx_all = []
@@ -387,7 +389,26 @@ def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range
                 box_size_prev = box_size_all[boxsize_idx_all[i]]
                 pos_x_diff = np.abs(x_pos-box_pos_prev[0])
                 pos_y_diff = np.abs(y_pos-box_pos_prev[1])
-                if (pos_x_diff<(box_size_now[0]+box_size_prev[0])/2) & (pos_y_diff<(box_size_now[1]+box_size_prev[1])/2):
+                # Overlap in x/y axis
+                overlap_x = (box_size_now[0]+box_size_prev[0])/2 - pos_x_diff
+                overlap_y = (box_size_now[1]+box_size_prev[1])/2 - pos_y_diff
+                if (overlap_x>0) & (overlap_y>0):
+                    # Exclude situations that two boxes with small overlapping.
+                    # We correct the position of the present box.
+                    if overlap_x < overlap_thr_x * box_size_now[0]:
+                        # If overlap is too small, then correct it into a fix distance: overlap_thr_x*box_size_now
+                        x_correct_dist = (box_size_now[0]+box_size_prev[0])/2 - overlap_thr_x * box_size_now[0]
+                        if x_pos < box_pos_prev[0]:
+                            x_pos = box_pos_prev[0] - x_correct_dist
+                        else:
+                            x_pos = box_pos_prev[0] + x_correct_dist
+                    if overlap_y < overlap_thr_y * box_size_now[1]:
+                        # Same judgment in y axis.
+                        y_correct_dist = (box_size_now[1]+box_size_prev[1])/2 - overlap_thr_y * box_size_now[1]
+                        if y_pos < box_pos_prev[1]:
+                            y_pos = box_pos_prev[1] - y_correct_dist
+                        else:
+                            y_pos = box_pos_prev[1] + y_correct_dist
                     # Overlap, check if we need to update z axis of the new box.
                     z_obj_prev = box_pos_prev[-1] + box_size_prev[-1]/2 + box_size_now[-1]/2
                     if z_obj_prev > z_pos:
@@ -398,7 +419,3 @@ def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range
             box_pos_all.append([x_pos, y_pos, z_pos])
         boxsize_idx_all.append(box_size_idx)
     return box_pos_all, boxsize_idx_all
-
-
-
-
