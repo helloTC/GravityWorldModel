@@ -3,7 +3,7 @@ import pybullet as p
 import pybullet_data
 from PhysicalEngine.utils import macro_const
 
-ConstCollect = macro_const.Const()
+const = macro_const.Const()
 
 
 def print_separator(n=50):
@@ -44,6 +44,6 @@ def set_camera(distance, yaw, pitch, height):
     pitch[float]: camera pitch angle (in degrees, up/down).
     height[float]: camera height. 
     """
-    x = distance*np.cos(roll*const.PI/180)
-    y = distance*np.sin(roll*const.PI/180)
+    x = distance*np.cos(distance*const.PI/180)
+    y = distance*np.sin(distance*const.PI/180)
     p.resetDebugVisualizerCamera(distance, yaw+90, pitch, [x,y,height]) 
