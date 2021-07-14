@@ -1,6 +1,6 @@
 # PhysicalEngine
 ## Frame structure to build physical engine and different situations.
-This python repository was developed to build different situations in a simulated physical environment. All code was build inherited from [Pybullet](https://pybullet.org).
+This python repository was developed to build different situations in a simulated physical environment. All code was built inherited from [Pybullet](https://pybullet.org).
 
 *The design principle of this repository follows: concise, readable, and modular. All modules should include rich and clear annotations. Moreover, parameters of each function should decrease in the most possibility.*
 
@@ -51,5 +51,5 @@ I'm thrilled to welcome new contributors. If you have good ideas on the framewor
 [taicheng_huang@mail.bnu.edu.cn](taicheng_huang@mail.bnu.edu.cn)
 
 ## Acknowledge
-Thanks to Yitao Xu[study0098](https://github.com/study0098) for his wonderful beginning of this repository. I tidied his code to make this version. 
+Thanks to [study0098](https://github.com/study0098)(Yitao Xu) for his wonderful beginning of this repository. I tidied his code to make this version. 
 
