@@ -209,7 +209,7 @@ def adjust_confg_position(boxIDs, sigma):
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
     return box_pos_all, box_ori_all  
 
-def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
+def prepare_force_noise_inground(boxIDs, f_mag, f_angle, ground_height=0.0):
     """
     Prepare force noise.
     Force noise was only added into the box which located in ground.
@@ -223,7 +223,7 @@ def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
     -------
     targboxID[int]: the box ID needed to be forced.
     forceObj[Three-dimension list]: Force vector to be applied.
-    positionObj[Three-dimension list]: Position vector to be applied.
+    PosObj[Three-dimension list]: Position vector to be applied.
     """
     # Find Box located in the ground ----------
     isground = []
@@ -249,6 +249,31 @@ def prepare_force_noise(boxIDs, f_mag, f_angle, ground_height=0.0):
         forceObj = None
         posObj = None
     return targboxID, forceObj, posObj 
+
+def prepare_force_allblocks(boxIDs, f_mag, f_angle):
+    """
+    Prepare force noise
+    Force noise was added into all boxes of the configuration
+    ----------------
+    boxIDs[list]: All boxes in the configurations.
+    f_mag[float]: Force Magnitude.
+    f_angle[float]: Force Angle, need to transfer into radian measure.
+
+    Return:
+    --------
+    forceObj[list]: Force vector to be appied. Each element is a three dimensional list indicated force in x, y and z axis. Noted that force=0 in z axis.
+    PosObj[list]: Position vector to be applied. Each element is a three dimensional list indicated position in x, y and z axis. The positionObj inherited from position of each box.
+    """
+    forceObj = []
+    PosObj = []
+    for boxID in boxIDs:
+        box_pos, box_ori = p.getBasePositionAndOrientation(boxID)
+        # Prepare force
+        # Force orientation: uniform over the range [0, 360]
+        forceVector = [f_mag*np.cos(f_angle), f_mag*np.sin(f_angle), 0]
+        forceObj.append(forceVector)
+        PosObj.append(box_pos)
+    return forceObj, PosObj
 
 def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
     """
@@ -309,7 +334,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
         # Second, prepare force noise
           # force angle generated uniformly
         force_angle = np.random.uniform(0, 2*const.PI)
-        targboxID, force_arr, position_arr = prepare_force_noise(boxIDs, force_magnitude, force_angle, ground_height=ground_height)
+        targboxID, force_arr, position_arr = prepare_force_noise_inground(boxIDs, force_magnitude, force_angle, ground_height=ground_height)
         if targboxID is not None:
             # targboxID is None indicated no box located in the ground.
             # No need to do simulation for we have no idea on the force during simulation.
@@ -419,3 +444,5 @@ def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range
             box_pos_all.append([x_pos, y_pos, z_pos])
         boxsize_idx_all.append(box_size_idx)
     return box_pos_all, boxsize_idx_all
+
+
