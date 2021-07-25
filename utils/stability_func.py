@@ -323,7 +323,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
             # Simulation
               # Set gravity
             p.setGravity(0,0,const.GRAVITY)
-            for i in range(200):
+            for i in range(400):
                 p.stepSimulation()
                 time.sleep(const.TIME_STEP)
                 if i<force_time/(const.TIME_STEP): # Add force within the first 200ms
