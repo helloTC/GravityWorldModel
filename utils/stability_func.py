@@ -445,4 +445,30 @@ def place_boxes_on_space(box_num, box_size_all, pos_range_x = (-1, 1), pos_range
         boxsize_idx_all.append(box_size_idx)
     return box_pos_all, boxsize_idx_all
 
+def overlap_between_twoboxes(boxID1, boxID2):    
+    """    
+    Calculate overlap between two boxes in an axis.     
+    ----------------------------------    
+    boxID1[int]: ID of the first box    
+    boxID2[int]: ID of the second box       
+    
+    Returns:    
+    ----------    
+    overlap[three-dimensional array]: overlap in three axis. Note that the negative overlap indicated no overlap.
+    """    
+    # Get shape of the two boxes    
+    boxshape1 = np.array(p.getVisualShapeData(boxID1)[0][3])    
+    boxshape2 = np.array(p.getVisualShapeData(boxID2)[0][3])    
+    # Get position of the two boxes    
+    boxpos1 = np.array(p.getBasePositionAndOrientation(boxID1)[0])    
+    boxpos2 = np.array(p.getBasePositionAndOrientation(boxID2)[0])    
+    # Overlap = 0.5(shape1+shape2) - posdiff    
+    overlap = 0.5*(boxshape1+boxshape2)-np.abs(boxpos1-boxpos2)             
+    return overlap 
+
+
+
+
+
+
 
