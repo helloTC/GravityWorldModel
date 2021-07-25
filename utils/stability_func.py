@@ -180,10 +180,49 @@ def object_overlap_correct(boxIDs, velocity_tol=0.005):
         box_pos_all.append(box_pos)
         box_ori_all.append(box_ori)
     return box_pos_all, box_ori_all
-    
+
+def adjust_box_size(boxIDs, sigma):
+    """
+    Adjust object size by adding shape noise to each object object.
+    ----------------------
+    boxIDs[list]: All boxes in the configuration
+    sigma[float]: Shape noise was added as a horizontal gaussian noise.
+                  The gaussian noise follows N~(0, sigma)
+
+    Return:
+    -------
+    box_size_all: new shape of each box
+    box_pos_all: new position of each box
+    box_ori_all: new orientation of each box
+    """
+    box_size_all = []
+    box_pos_all = []
+    box_color_all = []
+    for i, boxID in enumerate(boxIDs):
+        # Get box shape
+        box_size = np.array(p.getVisualShapeData(boxID)[0][3])
+        box_color = p.getVisualShapeData(boxID)[0][-1]
+        box_color_all.append(box_color)
+        # Get box position
+        box_pos, box_ori = p.getBasePositionAndOrientation(boxID)
+        box_pos_all.append(box_pos)
+        # Prepare Gaussian noise
+        size_nos = np.random.normal(0, sigma, 3)
+        size_nos[-1] = 0
+        # Change Shape
+        box_size_nos = box_size + size_nos
+        box_size_all.append(box_size_nos)
+        p.removeBody(boxID)
+    boxIDs = []
+    for i in range(len(box_size_all)):
+        boxIDs.append(create_box(box_pos_all[i], box_size_all[i], box_color_all[i]))
+    # Position correction, in case of interobject penetration
+    box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
+    return box_size_all, box_pos_all, box_ori_all
+
 def adjust_confg_position(boxIDs, sigma):
     """
-    Adjust configuration by adding position noise to each box object
+    Adjust configuration by adding position noise to each box object.
     -------------------------------
     boxIDs[list]: All boxes in the configuration
     sigma[float]: Position noise was added as a horizontal gaussian noise.
@@ -452,7 +491,7 @@ def overlap_between_twoboxes(boxID1, boxID2):
     boxID1[int]: ID of the first box    
     boxID2[int]: ID of the second box       
     
-    Returns:    
+    Return:    
     ----------    
     overlap[three-dimensional array]: overlap in three axis. Note that the negative overlap indicated no overlap.
     """    
