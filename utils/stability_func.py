@@ -197,15 +197,24 @@ def adjust_box_size(boxIDs, sigma):
     """
     box_size_all = []
     box_pos_all = []
+    box_ori_all = []
     box_color_all = []
+    box_mass_all = []
+    box_friction_all = []
     for i, boxID in enumerate(boxIDs):
         # Get box shape
         box_size = np.array(p.getVisualShapeData(boxID)[0][3])
         box_color = p.getVisualShapeData(boxID)[0][-1]
         box_color_all.append(box_color)
+        # Get box dynamics
+        box_mass = p.getDynamicsInfo(boxID,-1)[0]
+        box_friction = p.getDynamicsInfo(boxID,-1)[1]
+        box_mass_all.append(box_mass)
+        box_friction_all.append(box_friction)
         # Get box position
         box_pos, box_ori = p.getBasePositionAndOrientation(boxID)
         box_pos_all.append(box_pos)
+        box_ori_all.append(box_ori)
         # Prepare Gaussian noise
         size_nos = np.random.normal(0, sigma, 3)
         size_nos[-1] = 0
@@ -215,7 +224,7 @@ def adjust_box_size(boxIDs, sigma):
         p.removeBody(boxID)
     boxIDs = []
     for i in range(len(box_size_all)):
-        boxIDs.append(create_box(box_pos_all[i], box_size_all[i], box_color_all[i]))
+        boxIDs.append(create_box(box_pos_all[i], box_size_all[i], box_color_all[i], mass=box_mass_all[i], friction=box_friction_all[i]))
     # Position correction, in case of interobject penetration
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
     return box_size_all, box_pos_all, box_ori_all
@@ -246,7 +255,7 @@ def adjust_confg_position(boxIDs, sigma):
         p.resetBasePositionAndOrientation(boxID, box_pos_nos, box_ori)
     # Position correction, in case of interobject penetration
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
-    return box_pos_all, box_ori_all  
+    return box_pos_all, box_ori_all
 
 def prepare_force_noise_inground(boxIDs, f_mag, f_angle, ground_height=0.0):
     """
