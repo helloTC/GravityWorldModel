@@ -221,10 +221,10 @@ def adjust_box_size(boxIDs, sigma):
         # Change Shape
         box_size_nos = box_size + size_nos
         box_size_all.append(box_size_nos)
+    # Remove bodies
+    for i, boxID in enumerate(boxIDs):
         p.removeBody(boxID)
-    boxIDs = []
-    for i in range(len(box_size_all)):
-        boxIDs.append(create_box(box_pos_all[i], box_size_all[i], box_color_all[i], mass=box_mass_all[i], friction=box_friction_all[i]))
+        boxID = create_box(box_pos_all[i], box_size_all[i], box_color_all[i], mass=box_mass_all[i], friction=box_friction_all[i])
     # Position correction, in case of interobject penetration
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
     return box_size_all, box_pos_all, box_ori_all
