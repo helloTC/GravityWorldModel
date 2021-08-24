@@ -44,6 +44,6 @@ def set_camera(distance, yaw, pitch, height):
     pitch[float]: camera pitch angle (in degrees, up/down).
     height[float]: camera height. 
     """
-    x = distance*np.cos(distance*const.PI/180)
-    y = distance*np.sin(distance*const.PI/180)
+    x = distance*np.cos(yaw*const.PI/180)
+    y = distance*np.sin(yaw*const.PI/180)
     p.resetDebugVisualizerCamera(distance, yaw+90, pitch, [x,y,height]) 
