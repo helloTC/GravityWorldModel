@@ -229,7 +229,7 @@ def adjust_box_size(boxIDs, sigma):
     box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
     return box_size_all, box_pos_all, box_ori_all
 
-def adjust_confg_position(boxIDs, sigma):
+def adjust_confg_position_gaussian(boxIDs, sigma):
     """
     Adjust configuration by adding position noise to each box object.
     -------------------------------
@@ -249,6 +249,33 @@ def adjust_confg_position(boxIDs, sigma):
         pos_nos = np.random.normal(0, sigma, 3)
         # No noise along Z axis
         pos_nos[-1] = 0
+        # print('Noise is {}'.format(pos_nos))
+        # Add noise
+        box_pos_nos = box_pos + pos_nos
+        p.resetBasePositionAndOrientation(boxID, box_pos_nos, box_ori)
+    # Position correction, in case of interobject penetration
+    box_pos_all, box_ori_all = object_overlap_correct(boxIDs)
+    return box_pos_all, box_ori_all
+
+def adjust_confg_position_fixdistance(boxIDs, magnitude):
+    """
+    Adjust configuration with specific distance from each of original box object.
+    Moving distance was randomized sampled from a uniform distribution.
+    --------------------------------------
+    boxIDs[list]: All boxes in the configuration
+    magnitude[float]: Moving distance.
+
+    Return:
+    --------
+    box_pos_all: new position of each box
+    box_ori_all: new orientation of each box
+    """
+    for boxID in boxIDs:
+        # Get box position
+        box_pos, box_ori = p.getBasePositionAndOrientation(boxID)
+        # Prepare angle sampled from uniform distribution
+        angle = np.random.uniform(0, 2*const.PI)
+        pos_nos = np.array([magnitude*np.cos(angle), magnitude*np.sin(angle), 0])
         # print('Noise is {}'.format(pos_nos))
         # Add noise
         box_pos_nos = box_pos + pos_nos
@@ -376,7 +403,7 @@ def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.
     # Start Simulation
     for n in range(n_iter):
         # First, adjust position of the configuration.
-        box_pos_adj, box_ori_adj = adjust_confg_position(boxIDs, pos_sigma)
+        box_pos_adj, box_ori_adj = adjust_confg_position_gaussian(boxIDs, pos_sigma)
         for i, boxID in enumerate(boxIDs):
             p.resetBasePositionAndOrientation(boxID, box_pos_adj[i], box_ori_adj[i])
         # Second, prepare force noise
