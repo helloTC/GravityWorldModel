@@ -15,7 +15,7 @@ def adjust_parameter_threshold(param, stab, targ_stab = 0.5, rate = 0.03):
 
 def find_stability_parameters(box_configs, param_init=0.08, targ_stab=0.50, iteration=500, stab_tol=0.02, isshow=False):
     """
-    Accomplish function to iteratively find the best position displacement paramter for specific stability of a configuration.
+    Accomplish function to iteratively find the best position displacement parameter for specific stability of a configuration.
     We iteratively examined stability of a specific parameter with enough iteration times, then optimized the parameter using a gradient descent method.
     -------------------------------
     box_configs[string]: pickle files recorded positions of boxes.
@@ -99,8 +99,9 @@ def find_stability_parameters(box_configs, param_init=0.08, targ_stab=0.50, iter
             # Provide gravity
             p.setGravity(0,0,-9.8)
             p.setTimeStep(const.TIME_STEP)
-            for i in range(300):
+            for i in range(500):
                 p.stepSimulation()
+            p.setGravity(0,0,0)
 
             box_pos_fin_all = []
             for i, boxID in enumerate(boxIDs):
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     out_dict['stab'] = out_stab
     out_dict['param'] = out_param
     with open('displacement_parameters.pkl', 'wb') as f:
-        pickle.dump(out_param, f)
+        pickle.dump(out_dict, f)
 
 
 
