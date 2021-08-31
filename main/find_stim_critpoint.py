@@ -2,8 +2,8 @@ import numpy as np
 import pybullet as p
 from PhysicalEngine.utils import stability_func, macro_const, utils
 import pickle
-# import time
 import os
+from multiprocessing import Pool
 
 const = macro_const.Const()
 def adjust_parameter_threshold(param, stab, targ_stab = 0.5, rate = 0.03):
@@ -76,7 +76,7 @@ def find_stability_parameters(box_configs, param_init=0.08, targ_stab=0.50, iter
             rate = 0.10
         elif round(np.abs(stab-targ_stab),2) >= 0.07:
             rate = 0.05
-        elif round(np.abs(stab-targ_stab),2) >= 0.04:
+        elif round(np.abs(stab-targ_stab),2) >= 0.03:
             rate = 0.03
         elif round(np.abs(stab-targ_stab),2) > stab_tol:
             rate = 0.01
@@ -109,23 +109,67 @@ def find_stability_parameters(box_configs, param_init=0.08, targ_stab=0.50, iter
 
             isstable = stability_func.examine_stability(box_pos_adj, box_pos_fin_all, tol=1e-3)
             if True in isstable:
-                print('Actual: Fall')
+                # print('    Actual: Fall')
                 actual_list.append(False)
             else:
-                print('Actual: Stable')
+                # print('    Actual: Stable')
                 actual_list.append(True)
         actual_list = np.array(actual_list)
         stab = sum(actual_list)/len(actual_list)
         # Adjust parameter
         param, _ = adjust_parameter_threshold(param, stab, targ_stab=targ_stab, rate=rate)
-        print('Stability: {}; Updated Parameters: {}'.format(stab, param)) 
-        stab_all.append(stab)
-        param_all.append(param)
+        print('Target Stability{}; Stability: {}; Updated Parameters: {}'.format(targ_stab, stab, param)) 
+        # An unstable initialized configuration could cause parameters smaller than 0.
+        # -1 means invalid value
+        if param < 0:
+            stab_all.append(-1)
+            param_all.append(-1)
+            break
+        else:
+            stab_all.append(stab)
+            param_all.append(param)
     stab_all = np.array(stab_all)
     param_all = np.array(param_all)
     return stab_all, param_all
 
 if __name__ == '__main__':
-    box_parpath = '/Users/huangtaicheng/workingdir/Code/pybullet/formalwork/BoxStimuli'
-    box_configs = os.path.join(box_parpath, '106_steady.pkl')
-    stab, param = find_stability_parameters(box_configs, param_init=0.08, targ_stab=0.80, iteration=500, stab_tol=0.01, isshow=False)
+    # Prepare box names
+    box_parpath = '/home/hellotc/PhysicsEngine/PNAS2013_exp1_stimuli_use'
+    box_names = os.listdir(box_parpath)
+    box_names = [bn for bn in box_names if 'steady' in bn]
+    # box_names = [box_names[0]]
+    # Prepare parameters
+    stability_target = np.arange(0.1,1.0,0.1)
+    
+    out_box_names = []
+    out_stab = []
+    out_param = []
+    # Multiprocess
+    pool = Pool(processes=150)
+    multiproc_handle = []
+    for bn in box_names:
+        for stab_target in stability_target:
+            print('Target Stability {}'.format(stab_target))
+            out_box_names.append(bn)
+            multiproc = pool.apply_async(find_stability_parameters, (os.path.join(box_parpath, bn), 0.08, stab_target, 500, 0.005, False))
+            multiproc_handle.append(multiproc)
+    pool.close()
+    pool.join()
+
+    for multiproc in multiproc_handle:
+        multiproc_data = multiproc.get()
+        out_stab.append(multiproc_data[0][-1])
+        out_param.append(multiproc_data[1][-1])
+        # print('Time')
+    out_box_names = np.array(out_box_names)
+    out_stab = np.array(out_stab)
+    out_param = np.array(out_param)
+    out_dict = {}
+    out_dict['box_names'] = out_box_names
+    out_dict['stab'] = out_stab
+    out_dict['param'] = out_param
+    with open('displacement_parameters.pkl', 'wb') as f:
+        pickle.dump(out_param, f)
+
+
+
