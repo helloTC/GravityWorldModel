@@ -6,7 +6,7 @@ import time
 
 const = macro_const.Const()
 
-def create_floor(urdf=None, color=None, texture=None, friction=0.1, client=0):
+def create_floor(position=(0,0,0), orientation=(0,0,0), urdf=None, color=None, texture=None, friction=0.1, client=0):
     """
     Create floor
     -------------
@@ -22,7 +22,7 @@ def create_floor(urdf=None, color=None, texture=None, friction=0.1, client=0):
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     if urdf is None:
         urdf = 'plane.urdf'
-    planeID = p.loadURDF('plane.urdf')
+    planeID = p.loadURDF('plane.urdf', basePosition=position, baseOrientation=p.getQuaternionFromEuler(orientation))
 
     if color is not None:
         # Load texture
@@ -35,11 +35,12 @@ def create_floor(urdf=None, color=None, texture=None, friction=0.1, client=0):
     p.changeDynamics(planeID, -1, lateralFriction=friction)
     return planeID
 
-def create_cylinder(position, radius, height, color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
+def create_cylinder(position, radius, height, orientation=(0,0,0), color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
     """
     create cylinder in physical scene.
     ----------------------
     position[3-element tuple]: Center position of the cylinder
+    orientation[3-element tuple]: Euler orientation, listed as (roll, yaw, pitch)
     radius[float]: radius of the cylinder
     height[float]: height of the cylinder
     color[4-element tuple]: rgba color
@@ -70,6 +71,7 @@ def create_cylinder(position, radius, height, color=None, texture=None, mass=1, 
                               baseCollisionShapeIndex=cylinderCollisionShape,
                               baseVisualShapeIndex=cylinderVisualShape,
                               basePosition=position,
+                              baseOrientation=p.getQuaternionFromEuler(orientation),
                               physicsClientId=client
                               )
 
@@ -84,11 +86,12 @@ def create_cylinder(position, radius, height, color=None, texture=None, mass=1, 
     p.changeDynamics(cylinderID, -1, lateralFriction=friction)
     return cylinderID
 
-def create_box(position, size, color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
+def create_box(position, size, orientation=(0,0,0), color=None, texture=None, mass=1, friction=0.1, client=0, isCollision=True):
     """ 
     create one box in physical scene
     --------------------------
     position[3-element tuple]: position (center) of the box
+    orientation[3-element tuple]: Euler orientation, listed as (roll, yaw, pitch)
     size[3-element tuple]: size of the box
     color[list]: RGBA color
     texture[.jpg/.png]: texture image
@@ -115,6 +118,7 @@ def create_box(position, size, color=None, texture=None, mass=1, friction=0.1, c
     boxID = p.createMultiBody(baseVisualShapeIndex=boxVisualShape,
                           baseCollisionShapeIndex=boxCollisionShape,   
                           basePosition=position,
+                          baseOrientation=p.getQuaternionFromEuler(orientation),
                           baseMass=mass,
                           physicsClientId=client)
 
