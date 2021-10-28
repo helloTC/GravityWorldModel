@@ -364,7 +364,8 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
     
     Return:
     -------
-    isstable[bool list]: whether configuration is stable or not, each element represent one box in the configuration.
+    isstable[bool list]: whether configuration is stable or not, each element represent one box in the configuration. 
+                         True for stable and False for unstable.
     """
     assert len(box_pos_ori) == len(box_pos_fin), "Need to use the same configuration."
     box_num = len(box_pos_ori)
@@ -374,9 +375,9 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
         pos_diff = (box_pos_ori[i][-1] - box_pos_fin[i][-1])**2
         if pos_diff > tol:
             # print('Box {} moved'.format(i+1))
-            isstable.append(True)
-        else:
             isstable.append(False)
+        else:
+            isstable.append(True)
     return isstable
 
 def run_IPE(boxIDs, pos_sigma, force_magnitude, force_time=0.2, ground_height=0.0, n_iter=1000, shownotion=True):
