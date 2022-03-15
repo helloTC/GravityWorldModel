@@ -368,11 +368,15 @@ def examine_stability(box_pos_ori, box_pos_fin, tol=0.01):
                          True for stable and False for unstable.
     """
     assert len(box_pos_ori) == len(box_pos_fin), "Need to use the same configuration."
+    box_pos_ori = np.array(box_pos_ori)
+    box_pos_fin = np.array(box_pos_fin)
     box_num = len(box_pos_ori)
     isstable = []
     for i in range(box_num):
         # Consider its z axis shift 
-        pos_diff = (box_pos_ori[i][-1] - box_pos_fin[i][-1])**2
+        # pos_diff = (box_pos_ori[i][-1] - box_pos_fin[i][-1])**2
+        # Consider position difference
+        pos_diff = np.sum((box_pos_ori[i] - box_pos_fin[i])**2)
         if pos_diff > tol:
             # print('Box {} moved'.format(i+1))
             isstable.append(False)

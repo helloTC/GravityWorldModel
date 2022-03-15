@@ -78,6 +78,7 @@ def getKeyPressed(time_max=4.0):
     textid_judge = p.addUserDebugText('Stable or Unstable', [-1.5,-1.5,5], textSize=2, textColorRGB=[1,0,0])
     judge = None
     time0 = time.time()
+    rt = None
     while True:
         time1 = time.time()
         time_pass = time1 - time0
@@ -88,17 +89,19 @@ def getKeyPressed(time_max=4.0):
         keys = p.getKeyboardEvents()
         if judge is not None:
             keys = [None]
-        if (ord('0') in keys) and (keys[ord('0')] & p.KEY_WAS_TRIGGERED):
+        if (ord('z') in keys) and (keys[ord('z')] & p.KEY_WAS_TRIGGERED):
             judge = True
             p.removeUserDebugItem(textid_judge)
             textid_judge = p.addUserDebugText('Your Judgment is Stable', [-1.5, -1.5, 5], textSize=2, textColorRGB=[1,0,0])
-        elif (ord('1') in keys) and (keys[ord('1')] & p.KEY_WAS_TRIGGERED):
+            rt = time.time() - time0
+        elif (ord('m') in keys) and (keys[ord('m')] & p.KEY_WAS_TRIGGERED):
             judge = False
             p.removeUserDebugItem(textid_judge)
             textid_judge = p.addUserDebugText('Your Judgment is Fall', [-1.5, -1.5, 5], textSize=2, textColorRGB=[1,0,0])
+            rt = time.time() - time0
         else:
             pass
-    return judge, textid_judge
+    return judge, textid_judge, rt
 
 def getKeyPressed_trigger():
     """
@@ -209,11 +212,10 @@ if __name__ == '__main__':
         _ = p.getKeyboardEvents() # Get KeyboardEvents to clear keyboard buffer
         time_rt_orig = time.time()
         # Check Keyboard
-        judge, textid_judge = getKeyPressed(time_max=(8.0-time_rt_orig+time_orig)) # 4s for a subject to press keys
+        judge, textid_judge, rt = getKeyPressed(time_max=(8.0-time_rt_orig+time_orig)) # 4s for a subject to press keys
         judge_list.append(judge)
-        time_rt_fin = time.time()
-        rt = time_rt_orig - time_rt_fin
         rt_list.append(rt)
+        print('rt is {}'.format(rt))
 
         time_fin = time.time()
         print('Time for each trial is {}'.format(time_fin-time_exp_start))
@@ -230,7 +232,7 @@ if __name__ == '__main__':
     outlist['actual_list'] = np.array(actual_list)
     outlist['judge_list'] = np.array(judge_list)
     outlist['config_positions'] = configs_position
-    with open('/Users/huangtaicheng/workingdir/Code/pybullet/formalwork/BehaviorData/SDT_Behav/PositionControl/'+config_name+'_htc_5-5_nofb.pkl', 'wb') as f:
-        pickle.dump(outlist, f)
+    # with open('/Users/huangtaicheng/workingdir/Code/pybullet/formalwork/BehaviorData/SDT_Behav/PositionControl/'+config_name+'_maqiuchen_5-5_nofb.pkl', 'wb') as f:
+    #     pickle.dump(outlist, f)
 
 
