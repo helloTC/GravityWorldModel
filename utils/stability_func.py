@@ -1,3 +1,4 @@
+from json.encoder import py_encode_basestring_ascii
 import pybullet as p
 import pybullet_data
 from PhysicalEngine.utils import macro_const
@@ -550,6 +551,24 @@ def overlap_between_twoboxes(boxID1, boxID2):
     overlap = 0.5*(boxshape1+boxshape2)-np.abs(boxpos1-boxpos2)             
     return overlap 
 
+def transform_pos_by_orientation(pos, orientation):
+    """
+    Transform a position by the orientation.
+    The orientation is a Quaternion, which could be further transformed into rotation matrix.
+    With this rotation matrix, we could further project position into a new coordinate system.
+    -----------------------
+    pos[array]: Position in 3D space.
+    orientation[4-point array/tuple]: quaternion.
+
+    Return:
+    --------
+    pos_transform[array]: Position projected into a new coordinate system according to the orientation.
+    """
+    assert len(orientation) == 4, "Orientation must be a quaternion."
+    rot_mat = p.getMatrixFromQuaternion(orientation)
+    rot_mat = np.reshape(rot_mat, [3,3])
+    pos_transform = np.dot(pos, rot_mat.T)
+    return pos_transform
 
 
 
