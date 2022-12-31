@@ -12,8 +12,7 @@ Texture files used in the physical engine.
 
 ## utils
 Basic implementation of the physical engine for investigating stability inference of humans.
-
-*The design principle of this repository follows: concise, readable, and modular. All modules should include rich and clear annotations. Moreover, parameters of each function should decrease in the most possibility.*
+Most basic functions including stack construction, stability estimation are implemented in [stability_func.py](https://github.com/helloTC/GravityWorldModel/blob/main/utils/stability_func.py)
 
 # Acknowledgment
 Thanks to [study0098](https://github.com/study0098)(Yitao Xu) for his early implementation of this repository. I reframed his code to finish followed investigations. 
